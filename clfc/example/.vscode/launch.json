@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "c++ launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [
+        "\"t#his\"",
+        "\"is\"",
+        "\"a\"",
+        "\"test\""
+      ],
+      "program": "/home/zilleplus/code/rust/CppLaunchFileCreator/clfc/example/a.out",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
