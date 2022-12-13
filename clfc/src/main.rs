@@ -69,7 +69,6 @@ fn main() {
     let debug_arguments: Vec<String> = args
         .into_iter()
         .skip(2) // skip both the rust and c++ binary name
-        .map(|x| format!("\"{x}\""))
         .collect();
 
     let config = Config::new(&binary_path, debug_arguments).unwrap_or_else(|error| panic!("{error}"));
