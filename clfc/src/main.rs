@@ -2,6 +2,14 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
+struct SetupCommand{
+    description: String,
+    text: String,
+    #[serde(rename="ignoreFailures")]
+    ignore_failures: bool
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct Config {
     name: String,
     r#type: String,
@@ -9,6 +17,8 @@ struct Config {
     args: Vec<String>,
     program: String,
     cwd: String,
+    #[serde(rename="setupCommands")]
+    setup_commands: Vec<SetupCommand>
 }
 
 impl Config {
@@ -35,6 +45,12 @@ impl Config {
             None => return Err(format!("The binary path({binary_path_string}) is invalid. Can't create a string from the path.")),
         };
 
+        let setup_commands = vec![SetupCommand{
+            description: "Enable pretty-printing for gdb".into(),
+            text: "-enable-pretty-printing".into(),
+            ignore_failures: true
+        }];
+
         Ok(Config {
             name: "c++ launch".to_string(),
             r#type: "cppdbg".to_string(),
@@ -42,6 +58,7 @@ impl Config {
             args: arguments,
             program: binary_path.to_string(),
             cwd: current_dir,
+            setup_commands
         })
     }
 }
