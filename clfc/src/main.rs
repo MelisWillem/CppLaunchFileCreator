@@ -13,23 +13,22 @@ struct Config {
 
 impl Config {
     fn new(binary_path_string: &String, arguments: Vec<String>) -> Result<Config, String> {
-        let binary_path = std::fs::canonicalize(PathBuf::from(binary_path_string)).unwrap();
+        let binary_path = match std::fs::canonicalize(PathBuf::from(binary_path_string)) {
+            Ok(path) => path,
+            Err(_) => return Err(format!("The binary path({binary_path_string}) is invalid. Either the file doesn't exist or one of the directories in the path doesn't exist.")),
+        };
 
-
-        if !binary_path.exists()
-        {
-            return Err(match binary_path.to_str() {
-                Some(s) => format!("The binary path {s}"),
-                None => format!("The binary path({binary_path_string}) is invalid.")
-            });
-        }
+        let binary_path = match binary_path.to_str() {
+            Some(s) => s,
+            None => return Err(format!("The binary path({binary_path_string}) is invalid. Can't create a string from the path.")),
+        };
 
         Ok(Config {
             name: "c++ launch".to_string(),
             r#type: "cppdbg".to_string(),
             request: "launch".to_string(),
             args: arguments,
-            program: binary_path.to_str().unwrap().to_string(),
+            program: binary_path.to_string(),
             cwd: "${workspaceFolder}".to_string(),
         })
     }
@@ -56,9 +55,12 @@ fn main() {
     // 1=> cpp binary
     // 1< => cpp arguments (optional)
 
-    if args.len() < 3 {
+    if args.len() < 2 {
+        // first argument is the rust binary name of the clfc tool
+        // second argument is the cpp binary name
         println!("Empty run, can't create launch .json");
         println!("You should at least provide one argument to specify the binary you want to run. (example: 'clfc a.out')");
+        return;
     }
 
     let binary_path = match args.iter().skip(1).next() {
@@ -71,11 +73,12 @@ fn main() {
         .skip(2) // skip both the rust and c++ binary name
         .collect();
 
-    let config = Config::new(&binary_path, debug_arguments).unwrap_or_else(|error| panic!("{error}"));
+    let config =
+        Config::new(&binary_path, debug_arguments).unwrap_or_else(|error| panic!("{error}"));
     let launch = Launch::new(config);
 
-    let launch_json =
-        serde_json::to_string_pretty(&launch).expect("Internal error: can't create launch json file.");
+    let launch_json = serde_json::to_string_pretty(&launch)
+        .expect("Internal error: can't create launch json file.");
 
     println!("{launch_json}");
 }
