@@ -60,9 +60,11 @@ fn main() {
         // second argument is the cpp binary name
         println!("Empty run, can't create launch .json");
         println!("You should at least provide one argument to specify the binary you want to run. (example: 'clfc a.out')");
+        println!("example: 'clfc a.out arg1 arg2 arg3'");
         return;
     }
 
+    // skip the first argument (rust binary name) and get the second argument (cpp binary name)
     let binary_path = match args.iter().skip(1).next() {
         Some(path) => path.clone(),
         None => panic!("Please provide the binary name"),
@@ -73,8 +75,13 @@ fn main() {
         .skip(2) // skip both the rust and c++ binary name
         .collect();
 
-    let config =
-        Config::new(&binary_path, debug_arguments).unwrap_or_else(|error| panic!("{error}"));
+    let config = match Config::new(&binary_path, debug_arguments) {
+        Ok(config) => config,
+        Err(error) => {
+            println!("{error}");
+            return;
+        }
+    };
     let launch = Launch::new(config);
 
     let launch_json = serde_json::to_string_pretty(&launch)
