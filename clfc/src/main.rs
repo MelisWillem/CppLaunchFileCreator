@@ -18,6 +18,18 @@ impl Config {
             Err(_) => return Err(format!("The binary path({binary_path_string}) is invalid. Either the file doesn't exist or one of the directories in the path doesn't exist.")),
         };
 
+        // The cwd is set to the current directory, to simulate the behavior of 'gdb --args ./a.out arg1 arg2 arg3'
+        let current_dir = match std::env::current_dir() {
+            Ok(path) => path,
+            Err(_) => {
+                return Err(format!("Can't get the current directory.").into());
+            }
+        };
+        let current_dir = match current_dir.to_str() {
+            Some(s) => s.to_string(),
+            None => return Err(format!("The current directory is invalid. Can't create a string from the path.")),
+        };
+
         let binary_path = match binary_path.to_str() {
             Some(s) => s,
             None => return Err(format!("The binary path({binary_path_string}) is invalid. Can't create a string from the path.")),
@@ -29,7 +41,7 @@ impl Config {
             request: "launch".to_string(),
             args: arguments,
             program: binary_path.to_string(),
-            cwd: "${workspaceFolder}".to_string(),
+            cwd: current_dir,
         })
     }
 }
@@ -67,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(path) => path.clone(),
         None => {
             println!();
-            return Err(format!("Please provide the binary name. \n {EXAMPLE_CMD}").into());
+            return Err(format!("Please provide the binary name. {EXAMPLE_CMD}").into());
         }
     };
 
