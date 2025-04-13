@@ -48,26 +48,27 @@ impl Launch {
     }
 }
 
-fn main() {
+static EXAMPLE_CMD: &str = "example: 'clfc a.out arg1 arg2 arg3'";
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     // layout arguments
     // 0=> rust binary of this code
     // 1=> cpp binary
     // 1< => cpp arguments (optional)
 
-    if args.len() < 2 {
-        // first argument is the rust binary name of the clfc tool
-        // second argument is the cpp binary name
-        println!("Empty run, can't create launch .json");
-        println!("You should at least provide one argument to specify the binary you want to run. (example: 'clfc a.out')");
-        println!("example: 'clfc a.out arg1 arg2 arg3'");
-        return;
+    if args.len() > 1 && (&args[1] == "--help" || &args[1] == "-h" || &args[1] == "-help") {
+        println!("cpp launch file creator:\n Outputs launch.json file (to put in .vscode, and is consumed by c/c++ extension from microsoft) to run a command line throught gdb. The equivalent of 'gdb --args a.out arg1 arg2 arg3' . \n {EXAMPLE_CMD}");
+        return Ok(());
     }
 
     // skip the first argument (rust binary name) and get the second argument (cpp binary name)
     let binary_path = match args.iter().skip(1).next() {
         Some(path) => path.clone(),
-        None => panic!("Please provide the binary name"),
+        None => {
+            println!();
+            return Err(format!("Please provide the binary name. \n {EXAMPLE_CMD}").into());
+        }
     };
 
     let debug_arguments: Vec<String> = args
@@ -78,8 +79,7 @@ fn main() {
     let config = match Config::new(&binary_path, debug_arguments) {
         Ok(config) => config,
         Err(error) => {
-            println!("{error}");
-            return;
+            return Err(format!("{error}").into());
         }
     };
     let launch = Launch::new(config);
@@ -88,4 +88,6 @@ fn main() {
         .expect("Internal error: can't create launch json file.");
 
     println!("{launch_json}");
+
+    return Ok(());
 }
